@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>受付試用期間評価・本採用判定</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f1ea;
+  --bg-card:#fffdf8;
+  --ink:#2a2419;
+  --ink-soft:#5c5043;
+  --ink-mute:#8a7d6c;
+  --accent:#7d3a2c;        /* 弁柄 */
+  --accent-soft:#b86552;
+  --gold:#a88445;
+  --pine:#3e5530;
+  --indigo:#314a5e;
+  --line:#d9cfbe;
+  --line-soft:#e8e0cf;
+  --good:#5e7a4a;
+  --ok:#a88445;
+  --warn:#c2823e;
+  --bad:#a85040;
+  --shadow:0 1px 2px rgba(60,40,20,.06),0 8px 24px rgba(60,40,20,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:"Noto Sans JP",sans-serif;font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body{padding:20px 16px 60px;max-width:1100px;margin:0 auto}
+
+/* Header */
+.app-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:12px 4px 18px;border-bottom:1px solid var(--line);margin-bottom:24px;flex-wrap:wrap}
+.app-title{font-family:"Noto Serif JP",serif;font-weight:600;font-size:24px;letter-spacing:.04em}
+.app-title .sub{display:block;font-size:11px;color:var(--ink-mute);letter-spacing:.2em;margin-top:4px;font-family:"Noto Sans JP",sans-serif;font-weight:400}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:24px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:12px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--ink-mute);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .2s}
+.tab:hover{color:var(--ink-soft)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+.panel{display:none}
+.panel.active{display:block}
+
+/* Card */
+.card{background:var(--bg-card);border:1px solid var(--line);border-radius:4px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h2{font-family:"Noto Serif JP",serif;font-size:16px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:8px;justify-content:space-between}
+.card h2 .title-l{display:flex;align-items:center;gap:8px}
+.card h2 .title-l::before{content:"";display:inline-block;width:3px;height:14px;background:var(--accent);border-radius:1px}
+.card h2 .weight{font-size:11px;color:var(--ink-mute);letter-spacing:.08em;font-weight:400}
+.card h3{font-size:13px;font-weight:600;color:var(--ink-soft);margin:14px 0 8px;letter-spacing:.05em}
+
+/* Form */
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field label{font-size:11px;color:var(--ink-mute);letter-spacing:.08em;font-weight:500}
+.field input,.field select,.field textarea{padding:8px 10px;border:1px solid var(--line);border-radius:3px;background:#fff;font-family:inherit;font-size:14px;color:var(--ink);transition:border-color .15s}
+.field textarea{resize:vertical;min-height:80px;line-height:1.6}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+
+/* Buttons */
+.btn{padding:8px 16px;border:1px solid var(--line);background:#fff;color:var(--ink);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;border-radius:3px;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:var(--ink-soft)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#5f2c21;border-color:#5f2c21}
+.btn-ghost{background:transparent}
+.btn-danger{color:var(--bad);border-color:var(--line)}
+.btn-danger:hover{background:#fdf3f1;border-color:var(--bad)}
+.btn-sm{padding:4px 10px;font-size:12px}
+
+/* Eval items */
+.eval-item{display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.eval-item:last-child{border-bottom:none}
+.eval-item .name{font-size:13px;color:var(--ink);font-weight:500}
+.eval-item .desc{display:block;font-size:11px;color:var(--ink-mute);margin-top:3px;line-height:1.5;font-weight:400}
+
+.score-group{display:flex;gap:4px}
+.score-btn{flex:1;padding:8px 4px;border:1px solid var(--line);background:#fff;color:var(--ink-mute);font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;border-radius:3px;transition:all .15s;text-align:center;line-height:1.3}
+.score-btn:hover{border-color:var(--ink-soft)}
+.score-btn .mark{display:block;font-family:"Noto Serif JP",serif;font-size:16px;font-weight:600;margin-bottom:2px}
+.score-btn.active.s3{background:var(--good);border-color:var(--good);color:#fff}
+.score-btn.active.s2{background:var(--ok);border-color:var(--ok);color:#fff}
+.score-btn.active.s1{background:var(--warn);border-color:var(--warn);color:#fff}
+.score-btn.active.s0{background:var(--bad);border-color:var(--bad);color:#fff}
+
+/* Required (pass/fail) items */
+.req-item{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.req-item:last-child{border-bottom:none}
+.req-group{display:flex;gap:4px}
+.req-btn{flex:1;padding:8px 6px;border:1px solid var(--line);background:#fff;color:var(--ink-mute);font-size:12px;font-weight:500;cursor:pointer;border-radius:3px;transition:all .15s;text-align:center}
+.req-btn:hover{border-color:var(--ink-soft)}
+.req-btn.active.pass{background:var(--good);border-color:var(--good);color:#fff}
+.req-btn.active.fail{background:var(--bad);border-color:var(--bad);color:#fff}
+
+/* Result */
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:12px 0}
+.result-cell{padding:14px;background:#fbf8f1;border:1px solid var(--line-soft);border-radius:4px;text-align:center}
+.result-cell .lbl{font-size:11px;color:var(--ink-mute);letter-spacing:.08em;margin-bottom:6px}
+.result-cell .val{font-family:"Noto Serif JP",serif;font-size:22px;font-weight:600;color:var(--ink)}
+.result-cell .unit{font-size:11px;color:var(--ink-mute);margin-left:2px}
+
+/* Verdict */
+.verdict{padding:24px;border-radius:6px;text-align:center;margin:14px 0;border:2px solid}
+.verdict .lbl{font-size:11px;letter-spacing:.2em;font-weight:500;margin-bottom:8px;text-transform:uppercase}
+.verdict .judge{font-family:"Noto Serif JP",serif;font-size:28px;font-weight:600;letter-spacing:.05em}
+.verdict .desc{margin-top:10px;font-size:13px;line-height:1.7}
+.verdict.recommend{background:#eef3e8;border-color:var(--good);color:var(--good)}
+.verdict.acceptable{background:#faf3e0;border-color:var(--ok);color:var(--ok)}
+.verdict.extend{background:#fbe9d7;border-color:var(--warn);color:#8a5520}
+.verdict.reject{background:#fce8e4;border-color:var(--bad);color:var(--bad)}
+.verdict .warn{display:inline-block;margin-top:10px;padding:6px 12px;background:rgba(168,80,64,.1);border-radius:3px;color:var(--bad);font-size:12px;font-weight:500}
+
+/* Bar */
+.breakdown-row{display:grid;grid-template-columns:130px 1fr 70px;gap:10px;align-items:center;padding:6px 0;font-size:12px}
+.breakdown-row .lbl{color:var(--ink-mute);font-size:11px;letter-spacing:.05em}
+.breakdown-row .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+.bar{height:6px;background:var(--line-soft);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);transition:width .4s ease}
+.bar-fill.skill{background:var(--accent)}
+.bar-fill.patient{background:var(--indigo)}
+.bar-fill.team{background:var(--good)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line-soft)}
+th{font-size:11px;color:var(--ink-mute);font-weight:500;letter-spacing:.05em;background:#fbf8f1}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:hover td{background:#fbf8f1}
+
+/* Notice */
+.notice{padding:12px 14px;background:#fdf3f1;border-left:3px solid var(--accent);border-radius:3px;font-size:12px;color:var(--ink-soft);margin-bottom:14px;line-height:1.7}
+
+.empty{padding:40px 20px;text-align:center;color:var(--ink-mute);font-size:13px}
+
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.flex-between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.muted{color:var(--ink-mute);font-size:12px}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:var(--line-soft);color:var(--ink-soft)}
+.tag.recommend{background:#eef3e8;color:var(--good)}
+.tag.acceptable{background:#faf3e0;color:var(--ok)}
+.tag.extend{background:#fbe9d7;color:#8a5520}
+.tag.reject{background:#fce8e4;color:var(--bad)}
+
+@media (max-width:640px){
+  body{padding:14px 12px 40px}
+  .app-title{font-size:20px}
+  .card{padding:14px}
+  .eval-item,.req-item{grid-template-columns:1fr;gap:6px}
+  .breakdown-row{grid-template-columns:90px 1fr 50px}
+}
+
+@media print{
+  body{padding:0;background:#fff;max-width:100%}
+  .tabs,.header-actions,.btn,.score-btn,.req-btn{display:none !important}
+  .card{break-inside:avoid;box-shadow:none;border:1px solid #999}
+  .panel{display:block !important}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1 class="app-title">受付試用期間評価・本採用判定
+      <span class="sub">3-MONTH TRIAL EVALUATION</span>
+    </h1>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="exportData()">書出し</button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">読込み</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="evaluate">評価入力</button>
+  <button class="tab" data-tab="records">記録一覧</button>
+  <button class="tab" data-tab="criteria">判定基準</button>
+</nav>
+
+<!-- ========== 評価入力 ========== -->
+<section class="panel active" id="panel-evaluate">
+
+  <div class="card">
+    <h2><span class="title-l">基本情報</span>
+      <button class="btn btn-sm" onclick="newRecord()">+ 新規評価</button>
+    </h2>
+    <div class="field-row">
+      <div class="field">
+        <label>評価記録</label>
+        <select id="recordSelect" onchange="loadRecord()"></select>
+      </div>
+      <div class="field">
+        <label>氏名</label>
+        <input type="text" id="staffName" placeholder="例：山田 花子" onchange="autoSave()">
+      </div>
+      <div class="field">
+        <label>入職日</label>
+        <input type="date" id="joinDate" onchange="autoSave()">
+      </div>
+      <div class="field">
+        <label>評価日</label>
+        <input type="date" id="evalDate" onchange="autoSave()">
+      </div>
+      <div class="field">
+        <label>評価者</label>
+        <input type="text" id="evaluator" placeholder="例：院長" onchange="autoSave()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 必須要件 -->
+  <div class="card">
+    <h2><span class="title-l">Ⅰ. 必須要件（足切り項目）</span><span class="weight">合否のみ</span></h2>
+    <div class="notice">医療機関の受付として最低限満たすべき要件です。1つでも「要改善」がある場合、本採用には慎重な判断が必要となります。</div>
+    <div id="reqItems"></div>
+  </div>
+
+  <!-- 業務習得度 -->
+  <div class="card">
+    <h2><span class="title-l">Ⅱ. 業務習得度（受付マニュアル準拠）</span><span class="weight">配分 50%</span></h2>
+    <div id="skillItems"></div>
+  </div>
+
+  <!-- 患者対応力 -->
+  <div class="card">
+    <h2><span class="title-l">Ⅲ. 患者対応力</span><span class="weight">配分 25%</span></h2>
+    <div id="patientItems"></div>
+  </div>
+
+  <!-- 人柄・チームワーク -->
+  <div class="card">
+    <h2><span class="title-l">Ⅳ. 人柄・チームワーク</span><span class="weight">配分 25%</span></h2>
+    <div id="teamItems"></div>
+  </div>
+
+  <!-- 自由記述 -->
+  <div class="card">
+    <h2><span class="title-l">所見・フィードバック</span></h2>
+    <div class="field">
+      <label>強み・良かった点</label>
+      <textarea id="noteStrength" placeholder="特に評価できる点、本人の強み" onchange="autoSave()"></textarea>
+    </div>
+    <div class="field">
+      <label>課題・改善が必要な点</label>
+      <textarea id="noteIssue" placeholder="不足している点、本人への課題" onchange="autoSave()"></textarea>
+    </div>
+    <div class="field">
+      <label>本人へのフィードバック・今後の方針</label>
+      <textarea id="noteFeedback" placeholder="本人に伝える内容、本採用後のフォロー方針など" onchange="autoSave()"></textarea>
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div class="card" id="resultCard">
+    <h2><span class="title-l">総合判定</span></h2>
+    <div id="resultArea"></div>
+  </div>
+
+  <div class="flex" style="justify-content:flex-end;margin-top:10px">
+    <button class="btn" onclick="window.print()">印刷</button>
+    <button class="btn btn-primary" onclick="saveAndConfirm()">保存して確定</button>
+  </div>
+</section>
+
+<!-- ========== 記録一覧 ========== -->
+<section class="panel" id="panel-records">
+  <div class="card">
+    <h2><span class="title-l">評価記録一覧</span></h2>
+    <div id="recordsList"></div>
+  </div>
+</section>
+
+<!-- ========== 判定基準 ========== -->
+<section class="panel" id="panel-criteria">
+  <div class="card">
+    <h2><span class="title-l">本採用判定基準</span></h2>
+    <table>
+      <thead><tr><th>判定</th><th>条件</th><th>意味</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag recommend">本採用推奨</span></td><td>総合80点以上 かつ 必須要件全て合格</td><td>そのまま本採用を推奨。即戦力として期待できる。</td></tr>
+        <tr><td><span class="tag acceptable">本採用可</span></td><td>総合65–79点 かつ 必須要件全て合格</td><td>本採用可。一部フォローを継続。</td></tr>
+        <tr><td><span class="tag extend">期間延長</span></td><td>総合50–64点、または必須要件に1件「要改善」あり</td><td>1–3ヶ月の試用期間延長を検討。重点課題を本人と共有。</td></tr>
+        <tr><td><span class="tag reject">見送り検討</span></td><td>総合50点未満、または必須要件に2件以上「要改善」あり</td><td>本採用見送りを慎重に検討。受け入れ方針も含めて再考。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="title-l">評価尺度</span></h2>
+    <table>
+      <thead><tr><th>記号</th><th>意味</th><th>点数</th></tr></thead>
+      <tbody>
+        <tr><td>◎</td><td>期待以上</td><td>3点</td></tr>
+        <tr><td>○</td><td>期待通り（試用期間としては十分）</td><td>2点</td></tr>
+        <tr><td>△</td><td>もう少し（指導が必要）</td><td>1点</td></tr>
+        <tr><td>×</td><td>課題あり</td><td>0点</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:10px">各カテゴリで「素点合計／満点」を計算し、配分%を乗じて総合点（100点満点）を算出します。</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="title-l">評価項目の根拠</span></h2>
+    <p class="muted">Ⅱ. 業務習得度は当院の受付マニュアル（朝の業務、受付・会計、電話対応、公費・予防接種事務、院内管理）に準拠して構成しています。Ⅲ. 患者対応力／Ⅳ. 人柄・チームワークは医療機関受付として一般的に求められる素養を含めています。</p>
+  </div>
+</section>
+
+<script>
+/* ============ 評価項目定義 ============ */
+const REQUIRED_ITEMS = [
+  { id:"r1", name:"守秘義務の遵守", desc:"患者の個人情報・診療内容を院外で口外しない。SNS等への投稿もしない。" },
+  { id:"r2", name:"勤怠（遅刻・欠勤）", desc:"無断欠勤なし。遅刻・欠勤時の連絡が適切。試用期間中の遅刻が許容範囲内。" },
+  { id:"r3", name:"身だしなみ・清潔感", desc:"制服が清潔。髪型・爪・アクセサリーが医療現場にふさわしい。" },
+  { id:"r4", name:"報告・連絡・相談", desc:"判断に迷う場面で自己判断せず、必ず上司・先輩に確認できる。" },
+  { id:"r5", name:"基本的な挨拶", desc:"出勤時・退勤時の挨拶、患者への「おはようございます／お大事に」が自然にできる。" }
+];
+
+const SKILL_ITEMS = [
+  { id:"s1", name:"朝の準備業務", desc:"電源投入、待合・受付の清掃、ソファ除菌、トイレ清掃、キッズコーナー整理を時間内に完了できる。" },
+  { id:"s2", name:"レジ・両替準備", desc:"金庫からの現金準備、両替対応、小口現金確認表の記入が正確にできる。" },
+  { id:"s3", name:"受付・カルテ準備", desc:"当日処置予約・ネット予約者のカルテ準備、指示箋への日付・名前・ID記入ができる。" },
+  { id:"s4", name:"受付業務（来院対応）", desc:"保険証確認、新患受付、問診票の案内、ネット予約・順番案内ができる。" },
+  { id:"s5", name:"会計業務", desc:"レジ操作、釣銭、領収書発行、自費・保険の区別ができる。" },
+  { id:"s6", name:"電話対応（予約案内）", desc:"診察予約と処置予約の違いを説明し、適切に案内できる。" },
+  { id:"s7", name:"電話対応（場所案内・問合せ）", desc:"クリニックの場所、診療内容、料金（クリアタッチ等）の標準回答ができる。" },
+  { id:"s8", name:"公費・予防接種事務", desc:"風疹第5期、姫路市助成、クーポン券・受診券の確認、書類記入ができる。" },
+  { id:"s9", name:"レセプト業務の基礎", desc:"保険証の種類、点数算定の基本、月初の確認業務の流れを理解している。" },
+  { id:"s10", name:"院内管理・物品", desc:"消耗品の補充、加湿器の水、診察室・処置室の整備をこまめに確認できる。" },
+  { id:"s11", name:"終業時の業務", desc:"看板の収納、自動ドアの施錠、レジ締めを忘れず確実にできる。" },
+  { id:"s12", name:"PC・予約システム操作", desc:"電子カルテ、予約システム、レジシステムの基本操作が一人でできる。" }
+];
+
+const PATIENT_ITEMS = [
+  { id:"p1", name:"言葉遣い・敬語", desc:"患者に対して正しい敬語を使える。砕けすぎず、堅すぎない応対ができる。" },
+  { id:"p2", name:"笑顔・表情", desc:"自然な笑顔で患者を迎えられる。表情が硬すぎたり無表情ではない。" },
+  { id:"p3", name:"声のトーン・聞き取りやすさ", desc:"高齢患者にも聞き取りやすい声量・速度で話せる。" },
+  { id:"p4", name:"患者の質問への対応", desc:"分からないことは「確認します」と伝え、適切な人につなげる。曖昧な回答をしない。" },
+  { id:"p5", name:"待ち時間・トラブル時の対応", desc:"クレームや不満を訴える患者に冷静に対応し、過度に動揺しない。" },
+  { id:"p6", name:"配慮・気配り", desc:"高齢者・子連れ・体調不良の患者への席案内など、気配りができる。" }
+];
+
+const TEAM_ITEMS = [
+  { id:"t1", name:"協調性", desc:"看護師・医師との情報共有がスムーズ。受付内での連携も円滑。" },
+  { id:"t2", name:"積極性・学ぶ姿勢", desc:"分からないことを質問する、メモを取る、自主的に復習する姿勢がある。" },
+  { id:"t3", name:"素直さ・指摘の受け止め", desc:"注意・指導を素直に受け止め、改善行動につなげられる。同じミスを繰り返さない。" },
+  { id:"t4", name:"責任感", desc:"任された業務を最後までやり遂げる。報告も怠らない。" },
+  { id:"t5", name:"安定性・情緒", desc:"忙しい時間帯でも落ち着いて行動できる。感情の起伏が業務に影響しない。" },
+  { id:"t6", name:"医療現場への適応", desc:"医療機関特有の緊張感、衛生意識、患者プライバシーへの理解がある。" }
+];
+
+const WEIGHTS = { skill: 50, patient: 25, team: 25 };
+
+/* ============ ストレージ ============ */
+const STORE_KEY = "reception_trial_eval_v1";
+let store = loadStore();
+let currentId = null;
+
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return { records: [] };
+    return JSON.parse(raw);
+  }catch(e){ return { records: [] }; }
+}
+function saveStore(){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+
+/* ============ Tab ============ */
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("panel-"+tab.dataset.tab).classList.add("active");
+    if(tab.dataset.tab==="records") renderRecords();
+  });
+});
+
+/* ============ 評価項目を描画 ============ */
+function renderItems(){
+  document.getElementById("reqItems").innerHTML = REQUIRED_ITEMS.map(it=>`
+    <div class="req-item">
+      <div class="name">${escapeHtml(it.name)}<span class="desc">${escapeHtml(it.desc)}</span></div>
+      <div class="req-group" data-id="${it.id}">
+        <button class="req-btn pass" data-val="1" onclick="setReq('${it.id}',1)">合格</button>
+        <button class="req-btn fail" data-val="0" onclick="setReq('${it.id}',0)">要改善</button>
+      </div>
+    </div>
+  `).join("");
+
+  ["skill","patient","team"].forEach(cat=>{
+    const items = cat==="skill"?SKILL_ITEMS:cat==="patient"?PATIENT_ITEMS:TEAM_ITEMS;
+    const targetId = cat==="skill"?"skillItems":cat==="patient"?"patientItems":"teamItems";
+    document.getElementById(targetId).innerHTML = items.map(it=>`
+      <div class="eval-item">
+        <div class="name">${escapeHtml(it.name)}<span class="desc">${escapeHtml(it.desc)}</span></div>
+        <div class="score-group" data-cat="${cat}" data-id="${it.id}">
+          <button class="score-btn s3" data-val="3" onclick="setScore('${cat}','${it.id}',3)"><span class="mark">◎</span>期待以上</button>
+          <button class="score-btn s2" data-val="2" onclick="setScore('${cat}','${it.id}',2)"><span class="mark">○</span>期待通り</button>
+          <button class="score-btn s1" data-val="1" onclick="setScore('${cat}','${it.id}',1)"><span class="mark">△</span>もう少し</button>
+          <button class="score-btn s0" data-val="0" onclick="setScore('${cat}','${it.id}',0)"><span class="mark">×</span>課題あり</button>
+        </div>
+      </div>
+    `).join("");
+  });
+}
+
+/* ============ Record操作 ============ */
+function newRecord(){
+  const today = new Date().toISOString().slice(0,10);
+  const rec = {
+    id: "rec_"+Date.now(),
+    name: "", join: "", evalDate: today, evaluator: "",
+    required: {}, skill: {}, patient: {}, team: {},
+    noteStrength: "", noteIssue: "", noteFeedback: "",
+    createdAt: new Date().toISOString()
+  };
+  store.records.push(rec);
+  currentId = rec.id;
+  saveStore();
+  refreshSelector();
+  loadRecord();
+}
+
+function refreshSelector(){
+  const sel = document.getElementById("recordSelect");
+  if(store.records.length===0){
+    sel.innerHTML = '<option value="">— 「新規評価」から開始 —</option>';
+    return;
+  }
+  sel.innerHTML = store.records.map(r=>{
+    const label = (r.name||"（未入力）") + " / " + (r.evalDate||"日付なし");
+    return `<option value="${r.id}" ${r.id===currentId?"selected":""}>${escapeHtml(label)}</option>`;
+  }).join("");
+}
+
+function loadRecord(){
+  const sel = document.getElementById("recordSelect");
+  currentId = sel.value || currentId;
+  if(!currentId){ return; }
+  const rec = store.records.find(r=>r.id===currentId);
+  if(!rec) return;
+  document.getElementById("staffName").value = rec.name || "";
+  document.getElementById("joinDate").value = rec.join || "";
+  document.getElementById("evalDate").value = rec.evalDate || "";
+  document.getElementById("evaluator").value = rec.evaluator || "";
+  document.getElementById("noteStrength").value = rec.noteStrength || "";
+  document.getElementById("noteIssue").value = rec.noteIssue || "";
+  document.getElementById("noteFeedback").value = rec.noteFeedback || "";
+
+  // restore buttons
+  document.querySelectorAll(".req-group").forEach(g=>{
+    const id = g.dataset.id;
+    g.querySelectorAll(".req-btn").forEach(b=>b.classList.remove("active"));
+    if(rec.required[id] !== undefined){
+      const btn = g.querySelector(`.req-btn[data-val="${rec.required[id]}"]`);
+      if(btn) btn.classList.add("active");
+    }
+  });
+  ["skill","patient","team"].forEach(cat=>{
+    document.querySelectorAll(`.score-group[data-cat="${cat}"]`).forEach(g=>{
+      const id = g.dataset.id;
+      g.querySelectorAll(".score-btn").forEach(b=>b.classList.remove("active"));
+      if(rec[cat][id] !== undefined){
+        const btn = g.querySelector(`.score-btn[data-val="${rec[cat][id]}"]`);
+        if(btn) btn.classList.add("active");
+      }
+    });
+  });
+
+  recalc();
+}
+
+function autoSave(){
+  if(!currentId) return;
+  const rec = store.records.find(r=>r.id===currentId);
+  if(!rec) return;
+  rec.name = document.getElementById("staffName").value;
+  rec.join = document.getElementById("joinDate").value;
+  rec.evalDate = document.getElementById("evalDate").value;
+  rec.evaluator = document.getElementById("evaluator").value;
+  rec.noteStrength = document.getElementById("noteStrength").value;
+  rec.noteIssue = document.getElementById("noteIssue").value;
+  rec.noteFeedback = document.getElementById("noteFeedback").value;
+  saveStore();
+  refreshSelector();
+}
+
+function setReq(id, val){
+  if(!currentId) newRecord();
+  const rec = store.records.find(r=>r.id===currentId);
+  rec.required[id] = val;
+  const g = document.querySelector(`.req-group[data-id="${id}"]`);
+  g.querySelectorAll(".req-btn").forEach(b=>b.classList.remove("active"));
+  g.querySelector(`.req-btn[data-val="${val}"]`).classList.add("active");
+  saveStore();
+  recalc();
+}
+
+function setScore(cat, id, val){
+  if(!currentId) newRecord();
+  const rec = store.records.find(r=>r.id===currentId);
+  rec[cat][id] = val;
+  const g = document.querySelector(`.score-group[data-cat="${cat}"][data-id="${id}"]`);
+  g.querySelectorAll(".score-btn").forEach(b=>b.classList.remove("active"));
+  g.querySelector(`.score-btn[data-val="${val}"]`).classList.add("active");
+  saveStore();
+  recalc();
+}
+
+/* ============ 集計・判定 ============ */
+function computeRecord(rec){
+  const reqFail = REQUIRED_ITEMS.filter(it=>rec.required[it.id]===0).length;
+  const reqAnswered = REQUIRED_ITEMS.filter(it=>rec.required[it.id] !== undefined).length;
+
+  function catScore(cat, items){
+    let sum=0, max=0;
+    items.forEach(it=>{
+      if(rec[cat][it.id] !== undefined){ sum += rec[cat][it.id]; }
+      max += 3;
+    });
+    return { sum, max, pct: max>0 ? sum/max*100 : 0 };
+  }
+  const skill = catScore("skill", SKILL_ITEMS);
+  const patient = catScore("patient", PATIENT_ITEMS);
+  const team = catScore("team", TEAM_ITEMS);
+  const skillW = skill.pct/100 * WEIGHTS.skill;
+  const patientW = patient.pct/100 * WEIGHTS.patient;
+  const teamW = team.pct/100 * WEIGHTS.team;
+  const total = skillW + patientW + teamW;
+
+  // 判定
+  let verdict = "recommend", verdictLabel = "本採用推奨", verdictDesc = "そのまま本採用を推奨。即戦力として期待できます。";
+  if(reqFail >= 2){
+    verdict = "reject";
+    verdictLabel = "見送り検討";
+    verdictDesc = "必須要件に2件以上の課題があるため、本採用見送りを慎重に検討してください。";
+  } else if(total < 50){
+    verdict = "reject";
+    verdictLabel = "見送り検討";
+    verdictDesc = "総合点が50点未満です。本採用見送りを慎重に検討してください。";
+  } else if(reqFail === 1){
+    verdict = "extend";
+    verdictLabel = "期間延長";
+    verdictDesc = "必須要件に1件「要改善」があるため、1〜3ヶ月の試用期間延長を検討してください。";
+  } else if(total < 65){
+    verdict = "extend";
+    verdictLabel = "期間延長";
+    verdictDesc = "総合点が50〜64点です。試用期間延長を検討し、重点課題を本人と共有してください。";
+  } else if(total < 80){
+    verdict = "acceptable";
+    verdictLabel = "本採用可";
+    verdictDesc = "本採用可。一部フォローを継続しながら戦力化を進めてください。";
+  }
+
+  return { reqFail, reqAnswered, skill, patient, team, skillW, patientW, teamW, total, verdict, verdictLabel, verdictDesc };
+}
+
+function recalc(){
+  if(!currentId){ document.getElementById("resultArea").innerHTML = '<div class="empty">「新規評価」で評価を開始してください。</div>'; return; }
+  const rec = store.records.find(r=>r.id===currentId);
+  if(!rec) return;
+  const r = computeRecord(rec);
+
+  let html = `
+    <div class="result-grid">
+      <div class="result-cell"><div class="lbl">業務習得度</div><div class="val">${r.skillW.toFixed(1)}<span class="unit">/${WEIGHTS.skill}</span></div></div>
+      <div class="result-cell"><div class="lbl">患者対応力</div><div class="val">${r.patientW.toFixed(1)}<span class="unit">/${WEIGHTS.patient}</span></div></div>
+      <div class="result-cell"><div class="lbl">人柄・チーム</div><div class="val">${r.teamW.toFixed(1)}<span class="unit">/${WEIGHTS.team}</span></div></div>
+      <div class="result-cell"><div class="lbl">必須要件</div><div class="val">${REQUIRED_ITEMS.length-r.reqFail}<span class="unit">/${REQUIRED_ITEMS.length} 合格</span></div></div>
+    </div>
+
+    <div>
+      <div class="breakdown-row"><span class="lbl">業務習得度</span>
+        <div class="bar"><div class="bar-fill skill" style="width:${r.skill.pct}%"></div></div>
+        <span class="val">${r.skill.sum}/${r.skill.max}</span></div>
+      <div class="breakdown-row"><span class="lbl">患者対応力</span>
+        <div class="bar"><div class="bar-fill patient" style="width:${r.patient.pct}%"></div></div>
+        <span class="val">${r.patient.sum}/${r.patient.max}</span></div>
+      <div class="breakdown-row"><span class="lbl">人柄・チーム</span>
+        <div class="bar"><div class="bar-fill team" style="width:${r.team.pct}%"></div></div>
+        <span class="val">${r.team.sum}/${r.team.max}</span></div>
+    </div>
+
+    <div class="verdict ${r.verdict}">
+      <div class="lbl">総合判定</div>
+      <div class="judge">${r.verdictLabel}</div>
+      <div style="margin-top:6px;font-family:'Noto Serif JP',serif;font-size:32px;font-weight:600">${r.total.toFixed(1)}<span style="font-size:14px;margin-left:4px">/100</span></div>
+      <div class="desc">${r.verdictDesc}</div>
+      ${r.reqFail>0 ? `<div class="warn">⚠ 必須要件に「要改善」が ${r.reqFail} 件あります</div>` : ""}
+    </div>
+  `;
+  document.getElementById("resultArea").innerHTML = html;
+}
+
+function saveAndConfirm(){
+  autoSave();
+  alert("評価を保存しました。");
+}
+
+/* ============ 記録一覧 ============ */
+function renderRecords(){
+  const el = document.getElementById("recordsList");
+  if(store.records.length===0){
+    el.innerHTML = '<div class="empty">評価記録がありません。</div>';
+    return;
+  }
+  let html = `<table><thead><tr>
+    <th>氏名</th><th>評価日</th><th>評価者</th><th class="num">総合点</th><th>判定</th><th></th>
+  </tr></thead><tbody>`;
+  store.records.slice().reverse().forEach(rec=>{
+    const r = computeRecord(rec);
+    html += `<tr>
+      <td>${escapeHtml(rec.name||"（未入力）")}</td>
+      <td>${rec.evalDate||"—"}</td>
+      <td>${escapeHtml(rec.evaluator||"—")}</td>
+      <td class="num"><strong>${r.total.toFixed(1)}</strong></td>
+      <td><span class="tag ${r.verdict}">${r.verdictLabel}</span></td>
+      <td>
+        <button class="btn btn-sm" onclick="openRecord('${rec.id}')">開く</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteRecord('${rec.id}')">削除</button>
+      </td>
+    </tr>`;
+  });
+  html += "</tbody></table>";
+  el.innerHTML = html;
+}
+
+function openRecord(id){
+  currentId = id;
+  document.querySelector('.tab[data-tab="evaluate"]').click();
+  refreshSelector();
+  loadRecord();
+}
+
+function deleteRecord(id){
+  if(!confirm("この評価記録を削除しますか？")) return;
+  store.records = store.records.filter(r=>r.id!==id);
+  saveStore();
+  if(currentId===id) currentId = null;
+  renderRecords();
+  refreshSelector();
+}
+
+/* ============ Import/Export ============ */
+function exportData(){
+  const blob = new Blob([JSON.stringify(store, null, 2)], { type:"application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `reception_trial_eval_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(ev){
+  const f = ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = e=>{
+    try{
+      const imported = JSON.parse(e.target.result);
+      if(!confirm("現在のデータを上書きしますか？")) return;
+      store = imported;
+      saveStore();
+      location.reload();
+    }catch(err){ alert("読込エラー: "+err.message); }
+  };
+  r.readAsText(f);
+}
+
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+}
+
+/* ============ 初期化 ============ */
+renderItems();
+if(store.records.length>0){
+  currentId = store.records[store.records.length-1].id;
+}
+refreshSelector();
+if(currentId) loadRecord();
+else recalc();
+</script>
+
+</body>
+</html>
