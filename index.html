@@ -159,8 +159,8 @@ tr:hover td{background:#fbf8f1}
   /* UI chrome を非表示 */
   .tabs,.header-actions,.app-title .sub{display:none !important}
   .card h2 .btn{display:none !important}
-  #recordSelect,.field label[for="recordSelect"]{display:none}
-  .field:has(#recordSelect){display:none}
+  #recordSelect{display:none}
+  #recordSelectField{display:none}
 
   /* アクションボタンは非表示 */
   .btn{display:none !important}
@@ -193,8 +193,8 @@ tr:hover td{background:#fbf8f1}
   .score-group,.req-group{justify-content:flex-end}
 
   /* 未選択の項目には印を付ける */
-  .score-group:not(:has(.active))::after,
-  .req-group:not(:has(.active))::after{
+  .score-group.unanswered::after,
+  .req-group.unanswered::after{
     content:"（未評価）";color:#999;font-size:10pt
   }
 
@@ -253,7 +253,7 @@ tr:hover td{background:#fbf8f1}
       <button class="btn btn-sm" onclick="newRecord()">+ 新規評価</button>
     </h2>
     <div class="field-row">
-      <div class="field">
+      <div class="field" id="recordSelectField">
         <label>評価記録</label>
         <select id="recordSelect" onchange="loadRecord()"></select>
       </div>
@@ -325,8 +325,22 @@ tr:hover td{background:#fbf8f1}
   </div>
 
   <div class="flex" style="justify-content:flex-end;margin-top:10px">
-    <button class="btn" onclick="window.print()">印刷</button>
+    <button class="btn" onclick="doPrint()">印刷 / PDF保存</button>
     <button class="btn btn-primary" onclick="saveAndConfirm()">保存して確定</button>
+  </div>
+
+  <!-- 印刷ヘルプ（初回または失敗時に表示） -->
+  <div id="printHelp" class="card" style="display:none;background:#fdf3f1;border-color:var(--accent)">
+    <h2><span class="title-l">印刷・PDF保存の方法</span>
+      <button class="btn btn-sm" onclick="document.getElementById('printHelp').style.display='none'">×</button>
+    </h2>
+    <p style="margin-bottom:10px"><strong>💡 印刷ボタンが反応しない場合：</strong>ブラウザ標準の印刷機能をお使いください。</p>
+    <h3>📱 iPad / iPhone（Safari）</h3>
+    <p class="muted" style="margin-bottom:10px">画面下部の <strong>共有ボタン（□↑）</strong> → <strong>「プリント」</strong> をタップ。<br>プリントプレビューでピンチアウト（拡大）すると、PDFとして「ファイル」に保存できます。</p>
+    <h3>💻 Mac</h3>
+    <p class="muted" style="margin-bottom:10px"><strong>Cmd + P</strong> → 「PDFとして保存」</p>
+    <h3>🖥 Windows</h3>
+    <p class="muted"><strong>Ctrl + P</strong> → 送信先を「PDFに保存」に設定</p>
   </div>
 </section>
 
@@ -663,6 +677,32 @@ function recalc(){
 function saveAndConfirm(){
   autoSave();
   alert("評価を保存しました。");
+}
+
+function doPrint(){
+  // 未評価項目に印を付ける
+  document.querySelectorAll(".score-group,.req-group").forEach(g=>{
+    if(g.querySelector(".active")){
+      g.classList.remove("unanswered");
+    } else {
+      g.classList.add("unanswered");
+    }
+  });
+
+  try {
+    window.print();
+    // 印刷後にヘルプを表示するかは判定が難しいので、初回のみヘルプを案内
+    if(!localStorage.getItem("print_help_shown")){
+      setTimeout(()=>{
+        document.getElementById("printHelp").style.display="block";
+        document.getElementById("printHelp").scrollIntoView({behavior:"smooth"});
+        localStorage.setItem("print_help_shown","1");
+      }, 500);
+    }
+  } catch(e){
+    document.getElementById("printHelp").style.display="block";
+    document.getElementById("printHelp").scrollIntoView({behavior:"smooth"});
+  }
 }
 
 /* ============ 記録一覧 ============ */
